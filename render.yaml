@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+
+previews:
+  generation: off
+
+services:
+  - type: web
+    name: vane
+    runtime: image
+    plan: standard
+    region: oregon
+    image:
+      url: docker.io/itzcrazykns1337/vane:v1.12.2
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: SEARXNG_API_URL
+        value: http://localhost:8080
+    disk:
+      name: vane-data
+      mountPath: /home/vane/data
+      sizeGB: 5
