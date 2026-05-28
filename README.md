@@ -1,6 +1,6 @@
 # Vane on Render
 
-> Deploy Vane as a private AI answering engine with bundled SearXNG search and persistent local data.
+> Deploy Vane as a self-hosted AI answering engine with bundled SearXNG search and persistent local data.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy-template/api/github/start?template_repo=<TEMPLATE_REPO_SLUG>)
 
