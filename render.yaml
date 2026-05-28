@@ -6,17 +6,23 @@ previews:
 services:
   - type: web
     name: vane
-    runtime: image
+    runtime: docker
     plan: standard
     region: oregon
-    image:
-      url: docker.io/itzcrazykns1337/vane:v1.12.2
-    healthCheckPath: /
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
     envVars:
       - key: PORT
+        value: "10000"
+      - key: VANE_INTERNAL_PORT
         value: "3000"
       - key: SEARXNG_API_URL
         value: http://localhost:8080
+      - key: BASIC_AUTH_USERNAME
+        value: vane
+      - key: BASIC_AUTH_PASSWORD
+        generateValue: true
     disk:
       name: vane-data
       mountPath: /home/vane/data

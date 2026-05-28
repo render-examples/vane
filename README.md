@@ -4,11 +4,12 @@
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy-template/api/github/start?template_repo=vane)
 
-This template runs the official Vane Docker image on a Render web service. Vane gives you a self-hosted search and answer interface that can use local or hosted LLM providers, cite sources, upload files, and keep search history on a persistent disk.
+This template wraps the official Vane Docker image with Nginx Basic Auth on a Render web service. Vane gives you a self-hosted search and answer interface that can use local or hosted LLM providers, cite sources, upload files, and keep search history on a persistent disk.
 
 ## Before you deploy
 
 - This template uses the full Vane image, which starts Vane and a bundled SearXNG process in the same service.
+- Nginx protects Vane with Basic Auth. The username is `vane`, and Render generates the password during Blueprint creation.
 - The default instance type is `standard` because Vane is a real Node.js app with Playwright and SearXNG included.
 - The template attaches a persistent disk at `/home/vane/data`, so the service is single-instance and does not use zero-downtime deploys.
 - You configure model providers, API keys, and local LLM endpoints in Vane's setup screen after the first deploy.
@@ -32,11 +33,11 @@ This template runs the official Vane Docker image on a Render web service. Vane 
 
 ## Why deploy Vane on Render
 
-- **One-click deployment:** The Blueprint creates the service, image, env vars, and disk.
+- **One-click deployment:** The Blueprint creates the service, Docker wrapper, env vars, and disk.
+- **Basic Auth gate:** Nginx protects the Vane UI before the setup screen is reachable.
 - **Bundled search:** SearXNG runs inside the same image, so no separate search service is required.
 - **Persistent state:** The disk preserves Vane's local database and search history across deploys.
 - **Managed HTTPS:** Render gives the web service a TLS-protected `*.onrender.com` URL.
-- **Simple updates:** Pin a new upstream image tag and redeploy from the Render Dashboard.
 
 ## Use cases
 
@@ -52,8 +53,8 @@ What you can run with this template:
 
 ```mermaid
 flowchart LR
-  user["Browser"] --> web["vane web service"]
-  web --> app["Vane Next.js app"]
+  user["Browser"] --> auth["Nginx Basic Auth"]
+  auth --> app["Vane Next.js app"]
   app --> search["Bundled SearXNG on localhost:8080"]
   app --> disk[/"vane-data disk at /home/vane/data"/]
   app --> providers["Optional LLM providers"]
@@ -61,7 +62,7 @@ flowchart LR
 
 | Resource | Type | Plan | Purpose |
 |----------|------|------|---------|
-| `vane` | Web service using `runtime: image` | `standard` | Runs the official Vane image and exposes the web UI |
+| `vane` | Docker web service | `standard` | Runs Nginx Basic Auth in front of the official Vane image |
 | `vane-data` | Persistent disk, 5 GB | Disk storage | Stores Vane's local state under `/home/vane/data` |
 
 Region: `oregon`. Change the `region` field in `render.yaml` before deploy if you want a different region.
@@ -71,15 +72,16 @@ Region: `oregon`. Change the `region` field in `render.yaml` before deploy if yo
 1. Click **[Deploy to Render](https://render.com/deploy-template/api/github/start?template_repo=vane)**.
 2. Choose the GitHub account or organization that will receive your fork.
 3. Review the Blueprint resources and click **Apply**.
-4. Wait for the image pull and service start, which usually takes 3 to 8 minutes on the first deploy.
+4. Wait for the Docker build, image pull, and service start, which usually takes 4 to 10 minutes on the first deploy.
 5. Open the `*.onrender.com` URL after the deploy is `Live`.
-6. Complete Vane's setup screen with your preferred model provider and search settings.
+6. Sign in with username `vane` and the generated `BASIC_AUTH_PASSWORD` from the service's **Environment** page.
+7. Complete Vane's setup screen with your preferred model provider and search settings.
 
 ## Configuration
 
 ### Required secrets
 
-**None.** Vane's provider keys are configured in the application setup screen after deployment.
+**None.** Vane's provider keys are configured in the application setup screen after deployment. The Basic Auth password is generated automatically.
 
 | Env var | What it's for | How to get it |
 |---------|---------------|---------------|
@@ -87,11 +89,11 @@ Region: `oregon`. Change the `region` field in `render.yaml` before deploy if yo
 
 ### Auto-generated secrets
 
-**None.** The Blueprint does not generate application secrets.
+Render generates these on first deploy and stores them as service env vars. Rotating the Basic Auth password logs out anyone using the old password, but it does not affect Vane's stored data.
 
 | Env var | Purpose |
 |---------|---------|
-| None | No generated secrets |
+| `BASIC_AUTH_PASSWORD` | Password for the Nginx Basic Auth prompt |
 
 ### Wired automatically from other resources
 
@@ -107,7 +109,9 @@ Common things people change after deploying:
 
 | Env var | Default | What it does |
 |---------|---------|--------------|
-| `PORT` | `3000` | Tells Vane which port to bind for public web traffic |
+| `BASIC_AUTH_USERNAME` | `vane` | Username for the Nginx Basic Auth prompt |
+| `PORT` | `10000` | Tells Nginx which port to bind for public web traffic |
+| `VANE_INTERNAL_PORT` | `3000` | Tells Vane which internal port to bind behind Nginx |
 | `SEARXNG_API_URL` | `http://localhost:8080` | Points Vane at the bundled SearXNG process |
 | `NODE_ENV` | Set by the image or runtime | Keeps the Next.js app in production mode |
 
@@ -131,12 +135,11 @@ Render's full pricing is available on [Render Pricing](https://render.com/pricin
 
 ### Pin the upstream version
 
-This template pins Vane to `v1.12.2`. To use another release, change the image tag:
+This template pins Vane to `v1.12.2` in the Docker wrapper. To use another release, change the base image tag:
 
-```yaml
-# render.yaml
-image:
-  url: docker.io/itzcrazykns1337/vane:v1.12.2
+```dockerfile
+# Dockerfile
+FROM docker.io/itzcrazykns1337/vane:v1.12.2
 ```
 
 Prefer versioned tags over `latest` so redeploys are repeatable.
@@ -163,10 +166,13 @@ Render disks can grow, but they cannot shrink. Pick the smallest size that fits 
 
 If you already operate SearXNG elsewhere, switch to the slim Vane image and set `SEARXNG_API_URL`:
 
+```dockerfile
+# Dockerfile
+FROM docker.io/itzcrazykns1337/vane:slim-latest
+```
+
 ```yaml
 # render.yaml
-image:
-  url: docker.io/itzcrazykns1337/vane:slim-latest
 envVars:
   - key: SEARXNG_API_URL
     value: https://your-searxng.example.com
@@ -195,7 +201,7 @@ Disk snapshots are full restores. You cannot restore a single file, and restorin
 
 ### Monitoring
 
-Use the service's **Metrics** and **Events** pages in the Render Dashboard to monitor deploys, memory, CPU, and restarts. The Blueprint sets `healthCheckPath: /`, so Render checks the Vane home page.
+Use the service's **Metrics** and **Events** pages in the Render Dashboard to monitor deploys, memory, CPU, and restarts. The Blueprint sets `healthCheckPath: /healthz`, so Render checks the Nginx proxy without needing Basic Auth credentials.
 
 ### Scaling
 
@@ -211,7 +217,7 @@ In the Render Dashboard, open the service and select **Logs**. With the Render C
 render logs --resources <service-id> --tail
 ```
 
-Look for both Vane startup logs and SearXNG startup logs. The full image starts SearXNG first, waits briefly, then starts the Vane server.
+Look for Nginx, Vane, and SearXNG startup logs. The wrapper starts Vane internally on port 3000, then Nginx exposes the authenticated public listener on `PORT`.
 
 ## Upgrading
 
@@ -219,7 +225,7 @@ Look for both Vane startup logs and SearXNG startup logs. The full image starts 
 
 1. Check the upstream [Vane releases](https://github.com/ItzCrazyKns/Vane/releases).
 2. Confirm the matching Docker image tag exists on Docker Hub.
-3. Update `image.url` in `render.yaml`.
+3. Update the `FROM` line in `Dockerfile`.
 4. Commit and push the change to trigger a deploy.
 5. Review the service logs and complete any Vane setup-screen migrations.
 
@@ -228,7 +234,7 @@ Look for both Vane startup logs and SearXNG startup logs. The full image starts 
 Watch the upstream release notes before upgrading across major versions. Known template-specific notes:
 
 - **v1.12.2:** Initial template pin. The full image bundles SearXNG and stores local state under `/home/vane/data`.
-- **Future releases:** Re-check the Dockerfile and README for changed ports, storage paths, or setup-screen behavior before bumping the image tag.
+- **Future releases:** Re-check the upstream Dockerfile and README for changed ports, storage paths, or setup-screen behavior before bumping the base image tag.
 
 ## Troubleshooting
 
@@ -240,13 +246,19 @@ The image tag might not exist, Docker Hub might be temporarily unavailable, or t
 docker manifest inspect docker.io/itzcrazykns1337/vane:v1.12.2
 ```
 
-If the tag is missing, choose a published tag from the upstream release notes and update `render.yaml`.
+If the tag is missing, choose a published tag from the upstream release notes and update `Dockerfile`.
 
 ### Service starts but health check fails
 
-The container might still be starting, SearXNG might be slow to initialize, or the service might be binding a different port than Render expects. Keep `PORT=3000` in `render.yaml` because the upstream image exposes Vane on port 3000.
+The container might still be building, Nginx might not have started, or the service might be binding a different port than Render expects. Keep `PORT=10000` for Nginx and `VANE_INTERNAL_PORT=3000` for Vane.
 
-Check logs for `Starting SearXNG...`, `Starting Vane...`, and any process exits before the health check timeout.
+Check logs for Nginx errors, `Starting SearXNG...`, `Starting Vane...`, and any process exits before the health check timeout.
+
+### Browser shows a Basic Auth prompt
+
+This is expected. Use username `vane` and the generated `BASIC_AUTH_PASSWORD` from the service's **Environment** page in the Render Dashboard.
+
+If you rotate `BASIC_AUTH_PASSWORD`, save the env var and redeploy the service.
 
 ### Vane says no chat model providers are configured
 
@@ -291,6 +303,10 @@ Yes. Switch to the slim image and set `SEARXNG_API_URL` to your SearXNG URL. The
 
 Use Vane's setup screen after the deploy is live. This keeps provider keys out of `render.yaml` and out of the template repository.
 
+### How do I sign in to Vane?
+
+Use the Basic Auth prompt before the Vane setup screen. The default username is `vane`, and Render generates `BASIC_AUTH_PASSWORD` during Blueprint creation.
+
 ### What happens if I delete the disk?
 
 You lose Vane's persisted local state for this service, including anything stored under `/home/vane/data`. Restore from a Render disk snapshot if one is available and recent enough.
@@ -307,16 +323,17 @@ Not with the attached disk. Render disks attach to one service instance, so this
 
 - **Encryption at rest:** Render persistent disks are encrypted at rest.
 - **Encryption in transit:** Render terminates TLS for the public `*.onrender.com` URL and any configured custom domains.
-- **Network exposure:** The Vane web UI is public by default. The bundled SearXNG process listens inside the container and is not exposed as a separate public service.
+- **Network exposure:** The Vane web UI is public but protected by Basic Auth by default. The `/healthz` endpoint is public and returns only `ok`.
 - **Secret handling:** Provider keys entered in Vane are handled by Vane, not by this Blueprint. Avoid committing provider keys to this repo.
-- **Access control:** Review Vane's upstream authentication status before exposing the service to untrusted users.
+- **Access control:** Basic Auth is a simple gate, not full user management. Use Cloudflare Access, Tailscale, or another identity-aware proxy if you need SSO, per-user audit trails, or device posture checks.
 - **Reporting vulnerabilities:** Report template problems in this repo. Report Vane application issues upstream through [GitHub Issues](https://github.com/ItzCrazyKns/Vane/issues).
 
 ## Caveats and limitations
 
-- The service is public unless you add app-level authentication, a private network pattern, or another access-control layer.
+- The service is public but protected with shared Basic Auth. Anyone with the username and password can access the Vane UI.
+- Vane itself does not yet include full authentication or per-user roles.
 - Disk-backed services are single-instance and do not use zero-downtime deploys.
-- The template pins `v1.12.2`. You need to update `render.yaml` to pick up upstream releases.
+- The template pins `v1.12.2`. You need to update `Dockerfile` to pick up upstream releases.
 - The full image includes SearXNG, Playwright, and browser dependencies. Keep the `standard` plan unless you verify a smaller plan yourself.
 - Local LLMs on your laptop are not reachable from Render by default.
 - Only `/home/vane/data` is mounted as persistent storage in this template.

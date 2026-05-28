@@ -1,0 +1,7 @@
+.git
+.DS_Store
+.env
+.env.*
+README.md
+LICENSE
+node_modules
