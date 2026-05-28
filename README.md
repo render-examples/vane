@@ -2,7 +2,7 @@
 
 > Deploy Vane as a self-hosted AI answering engine with bundled SearXNG search and persistent local data.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy-template/api/github/start?template_repo=<TEMPLATE_REPO_SLUG>)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy-template/api/github/start?template_repo=vane)
 
 This template runs the official Vane Docker image on a Render web service. Vane gives you a self-hosted search and answer interface that can use local or hosted LLM providers, cite sources, upload files, and keep search history on a persistent disk.
 
@@ -68,7 +68,7 @@ Region: `oregon`. Change the `region` field in `render.yaml` before deploy if yo
 
 ## Quickstart
 
-1. Click **[Deploy to Render](https://render.com/deploy-template/api/github/start?template_repo=<TEMPLATE_REPO_SLUG>)**.
+1. Click **[Deploy to Render](https://render.com/deploy-template/api/github/start?template_repo=vane)**.
 2. Choose the GitHub account or organization that will receive your fork.
 3. Review the Blueprint resources and click **Apply**.
 4. Wait for the image pull and service start, which usually takes 3 to 8 minutes on the first deploy.
