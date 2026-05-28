@@ -201,7 +201,7 @@ Disk snapshots are full restores. You cannot restore a single file, and restorin
 
 ### Monitoring
 
-Use the service's **Metrics** and **Events** pages in the Render Dashboard to monitor deploys, memory, CPU, and restarts. The Blueprint sets `healthCheckPath: /healthz`, so Render checks the Nginx proxy without needing Basic Auth credentials.
+Use the service's **Metrics** and **Events** pages in the Render Dashboard to monitor deploys, memory, CPU, and restarts. The Blueprint sets `healthCheckPath: /healthz`, so Render checks Vane through Nginx without needing Basic Auth credentials.
 
 ### Scaling
 
@@ -323,7 +323,7 @@ Not with the attached disk. Render disks attach to one service instance, so this
 
 - **Encryption at rest:** Render persistent disks are encrypted at rest.
 - **Encryption in transit:** Render terminates TLS for the public `*.onrender.com` URL and any configured custom domains.
-- **Network exposure:** The Vane web UI is public but protected by Basic Auth by default. The `/healthz` endpoint is public and returns only `ok`.
+- **Network exposure:** The Vane web UI is public but protected by Basic Auth by default. The `/healthz` endpoint is public and proxies to Vane for Render health checks.
 - **Secret handling:** Provider keys entered in Vane are handled by Vane, not by this Blueprint. Avoid committing provider keys to this repo.
 - **Access control:** Basic Auth is a simple gate, not full user management. Use Cloudflare Access, Tailscale, or another identity-aware proxy if you need SSO, per-user audit trails, or device posture checks.
 - **Reporting vulnerabilities:** Report template problems in this repo. Report Vane application issues upstream through [GitHub Issues](https://github.com/ItzCrazyKns/Vane/issues).
