@@ -19,23 +19,27 @@
 previews:
   generation: off
 
-services:
-  - type: web
-    name: vane
-    runtime: docker
-    plan: standard
-    region: oregon
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
-    healthCheckPath: /
-    disk:
-      name: vane-data
-      mountPath: /home/vane/data
-      sizeGB: 1
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: DATA_DIR
-        value: /home/vane
-      - key: PORT
-        value: "3000"
+projects:
+  - name: vane
+    environments:
+      - name: production
+        services:
+          - type: web
+            name: vane
+            runtime: docker
+            plan: standard
+            region: oregon
+            dockerfilePath: ./Dockerfile
+            dockerContext: .
+            healthCheckPath: /
+            disk:
+              name: vane-data
+              mountPath: /home/vane/data
+              sizeGB: 1
+            envVars:
+              - key: NODE_ENV
+                value: production
+              - key: DATA_DIR
+                value: /home/vane
+              - key: PORT
+                value: "3000"

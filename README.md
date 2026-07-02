@@ -60,6 +60,8 @@ flowchart LR
 | `vane` | Web (Docker) | Standard | Builds from `./Dockerfile`; runs Vane + SearXNG + Playwright |
 | `vane-data` | Persistent disk (1 GB) | Disk storage | SQLite database, uploads, local config |
 
+Everything lands in a single **`vane`** project (one `production` environment) in your Render dashboard, so the service and disk stay grouped instead of scattered across your workspace.
+
 Region defaults to **Oregon** in [`render.yaml`](./render.yaml). Change the `region` field before deploy if you want another region.
 
 ## Quickstart
@@ -67,7 +69,7 @@ Region defaults to **Oregon** in [`render.yaml`](./render.yaml). Change the `reg
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy-template/api/github/start?template_repo=vane)
 
 1. Click **Deploy to Render** and choose the GitHub account that receives the template fork.
-2. Review the Blueprint (`vane` web service + `vane-data` disk) and click **Apply**. No secrets are required at Apply time.
+2. Review the Blueprint. It creates a **`vane`** project with a `production` environment containing the `vane` web service and its `vane-data` disk. Click **Apply**. No secrets are required at Apply time.
 3. Wait for the first Docker build (~15–25 minutes). SearXNG is cloned and Playwright browsers are installed during the image build.
 4. Open the `*.onrender.com` URL when the service status is **Live** and the health check on `/` returns 200.
 5. Complete Vane's setup screen: add at least one chat model provider and save. Bundled SearXNG is already wired to `http://localhost:8080` inside the container.
