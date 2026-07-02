@@ -10,6 +10,14 @@
 
 Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources** while keeping your searches completely private.
 
+## Deploy on Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ojusave/Vane&branch=render-template)
+
+One-click Blueprint for this fork (`render-template` branch): Docker web service, bundled SearXNG, and a persistent disk for SQLite and uploads. First deploy takes ~15–25 minutes.
+
+Full template docs (cost, troubleshooting, gallery publish steps): **[docs/deploy-on-render.md](docs/deploy-on-render.md)**
+
 ![preview](.assets/vane-screenshot.png)
 
 Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).

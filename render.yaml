@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Vane on Render — privacy-focused AI answering engine
+# Upstream: https://github.com/ItzCrazyKns/Vane
+# Fork: https://github.com/ojusave/Vane
+#
+# Template deploy (after publish to render-examples):
+# https://render.com/deploy-template/api/github/start?template_repo=vane-render-template
+#
+# Blueprint deploy from this fork:
+# https://render.com/deploy?repo=https://github.com/ojusave/Vane&branch=render-template
+#
+# Single Docker image bundles Vane (Next.js) + SearXNG (localhost:8080).
+# SQLite and uploads live on a persistent disk at /home/vane/data.
+
+previews:
+  generation: off
+
+services:
+  - type: web
+    name: vane
+    runtime: docker
+    plan: standard
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    disk:
+      name: vane-data
+      mountPath: /home/vane/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /home/vane/data
+      - key: PORT
+        value: "3000"
