@@ -106,7 +106,7 @@ Defaults are set in [`render.yaml`](./render.yaml) and the Dockerfile. Override 
 | Env var | Default | What it does |
 |---------|---------|--------------|
 | `NODE_ENV` | `production` | Runs Next.js in production mode |
-| `DATA_DIR` | `/home/vane/data` | SQLite and upload root; must match the disk `mountPath` |
+| `DATA_DIR` | `/home/vane` | App root. Vane writes persistent data to `$DATA_DIR/data` (SQLite, config, uploads), which is the disk mounted at `/home/vane/data`. Do not set this to `/home/vane/data`: paths double-nest and the DB fails to open. |
 | `PORT` | `3000` | Port Vane binds inside the container; must match Render's health check target |
 | `SEARXNG_API_URL` | `http://localhost:8080` (Dockerfile) | Internal SearXNG URL for the bundled search engine |
 
@@ -194,7 +194,7 @@ Preview services with disks follow the same single-instance constraints as produ
 
 Render creates automatic disk snapshots for `vane-data` (daily retention per your workspace plan). Restore from the service **Disks** page. Snapshots are full-disk restores: you cannot restore individual files through the Dashboard.
 
-SQLite lives at `/home/vane/data/data/db.sqlite` when `DATA_DIR=/home/vane/data`.
+SQLite lives at `/home/vane/data/db.sqlite` (that is `$DATA_DIR/data/db.sqlite` with `DATA_DIR=/home/vane`), on the persistent disk. Config (`config.json`) and uploads sit alongside it under `/home/vane/data`.
 
 ### Monitoring
 
@@ -241,6 +241,10 @@ The Dockerfile clones SearXNG, installs Python dependencies, and downloads Playw
 
 Common causes: OOM on Starter, Vane not listening on `PORT=3000`, or SearXNG still starting. Confirm `plan: standard` in `render.yaml`. Check runtime logs for process exits before the health probe succeeds. Wait up to 60 seconds after deploy for SearXNG's startup loop in `entrypoint.sh`.
 
+### `unable to open database file` or migrations fail on first boot
+
+Vane derives its paths from `DATA_DIR`: the database is `$DATA_DIR/data/db.sqlite` and migrations are read from `$DATA_DIR/drizzle`. `DATA_DIR` must be the app root (`/home/vane`), so the data lands on the disk mounted at `/home/vane/data` and the migrations resolve to the folder baked into the image. If you set `DATA_DIR=/home/vane/data`, the paths double-nest (`/home/vane/data/data/db.sqlite`) and the DB directory does not exist on a fresh disk, so the open fails and the setup screen errors. Keep `DATA_DIR=/home/vane`.
+
 ### Vane reports no chat model providers configured
 
 Open the setup screen and add at least one provider. For OpenAI-compatible servers, the endpoint must be reachable **from Render**, not from your laptop. `http://localhost:11434` inside the Vane UI points at the container, not your local Ollama process.
@@ -251,7 +255,7 @@ Confirm logs show SearXNG listening on port 8080. The default `SEARXNG_API_URL` 
 
 ### Data disappears after a deploy
 
-Only files under `/home/vane/data` persist. Confirm the disk is attached and `DATA_DIR=/home/vane/data`. Anything written elsewhere on the container filesystem is ephemeral.
+Only files under `/home/vane/data` persist. Confirm the disk is attached at `/home/vane/data` and that `DATA_DIR=/home/vane` (Vane writes to `$DATA_DIR/data`). Anything written elsewhere on the container filesystem is ephemeral.
 
 ### Out of memory / "No open ports detected"
 
