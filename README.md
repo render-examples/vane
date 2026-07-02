@@ -16,6 +16,7 @@ Deploy [Vane](https://github.com/ItzCrazyKns/Vane) on Render as one Docker web s
 - [Use cases](#use-cases)
 - [What gets deployed](#what-gets-deployed)
 - [Quickstart](#quickstart)
+- [Walkthrough](#walkthrough)
 - [Configuration](#configuration)
 - [Cost breakdown](#cost-breakdown)
 - [Customization](#customization)
@@ -74,6 +75,24 @@ Region defaults to **Oregon** in [`render.yaml`](./render.yaml). Change the `reg
 4. Open the `*.onrender.com` URL when the service status is **Live** and the health check on `/` returns 200.
 5. Complete Vane's setup screen: add at least one chat model provider and save. Bundled SearXNG is already wired to `http://localhost:8080` inside the container.
 6. Run a test search. Confirm sources appear in the answer panel before you share the URL.
+
+## Walkthrough
+
+**1. First open.** The `*.onrender.com` URL greets you once the service is Live.
+
+![Vane welcome screen](./assets/screenshots/01-welcome.png)
+
+**2. Add a provider.** Pick a connection type (OpenAI, Anthropic, Groq, Gemini, or any OpenAI-compatible endpoint), paste your API key, and save. Keys live in SQLite on the persistent disk, not in the Blueprint.
+
+![Add a model provider connection](./assets/screenshots/02-add-connection.png)
+
+**3. Ask.** The home screen takes a query and shows live widgets while research runs.
+
+![Vane research home](./assets/screenshots/03-research-home.png)
+
+**4. Read the answer.** Vane returns a cited answer with a sources panel and any media it found.
+
+![Cited answer with sources](./assets/screenshots/04-answer-with-sources.png)
 
 ## Configuration
 
